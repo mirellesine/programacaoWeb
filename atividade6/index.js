@@ -1,33 +1,33 @@
-/// server.js
 const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-
 const app = express();
-const PORT = process.env.PORT || 8080;
+const path = require('path');
+const mustacheExpress = require('mustache-express');
 
-// Configurar o bodyParser para lidar com dados de formulário
-app.use(bodyParser.urlencoded({ extended: true }));
+app.engine('html', mustacheExpress());
+app.set('view engine', 'html');
+app.set('views', path.join(__dirname, 'views'));
 
-// Servir arquivos estáticos da pasta 'views'
-app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.urlencoded({ extended: true }));
 
-// Rota para renderizar o formulário
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+    res.render('index');
 });
 
-// Rota para lidar com os dados do formulário
 app.post('/dados', (req, res) => {
     const { nome, endereco, telefone, data } = req.body;
-    const dataFormatada = data.toISOString();
-    res.render('dados', { nome, endereco, telefone, dataFormatada }); // Aqui passamos os dados para renderizar a visualização
+    let dataFormatada;
+    
+    if (typeof data === 'string' && !isNaN(Date.parse(data))) {
+        dataFormatada = new Date(data);
+    } else {
+        console.error('Erro: A data recebida não está em um formato válido.');
+        
+        dataFormatada = new Date();
+    }
+    res.render('dados', { nome, endereco, telefone, data: dataFormatada });
 });
 
-// Inicializar o servidor
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`App na porta ${PORT}`);
 });
-
-// Configurar o Express para usar EJS como mecanismo de visualização
-app.set('view engine', 'ejs');
